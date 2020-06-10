@@ -7,27 +7,50 @@ cGAN implementation
 
 import tensorflow as tf
 import numpy as np
+import os
 
-def downsample(filters, kernel_size= (3,3), strides= 2, padding= 'same'):
-    model= tf.keras.models.Sequential([
-        tf.keras.layers.Conv2D(filters= filters, kernel_size= kernel_size,
-                               strides= strides, padding= padding,
-                               use_bias= False, kernel_initializer= 'he_normal'),
-        tf.keras.layers.BatchNormalization(),
-        tf.keras.layers.LeakyReLU()
-        ])
-    return model
+class Downsample(tf.keras.layers.Layer):
+    
+    def __init__(self, filters, kernel_size= (3,3), strides= 2, padding= 'same', input_shape= None):
+        super(Downsample, self).__init__()
+        if input_shape == None:
+            self.conv= tf.keras.layers.Conv2D(filters= filters, kernel_size= kernel_size,
+                                              strides= strides, padding= padding,
+                                              use_bias= False, kernel_initializer= 'he_normal')
+        else:
+            self.conv= tf.keras.layers.Conv2D(filters= filters, kernel_size= kernel_size,
+                                              strides= strides, padding= padding, input_shape= input_shape,
+                                              use_bias= False, kernel_initializer= 'he_normal')
+        self.bn= tf.keras.layers.BatchNormalization()
+        self.actn= tf.keras.layers.LeakyReLU()
+    
+    def call(self, x):
+        x= self.conv(x)
+        x= self.bn(x)
+        x= self.actn(x)
+        return x
 
-def upsample(filters, kernel_size= (3,3), strides= 2, padding= 'same'):
-    model= tf.keras.models.Sequential([
-        tf.keras.layers.Conv2DTranspose(filters= filters, kernel_size= kernel_size,
-                               strides= strides, padding= padding,
-                               use_bias= False, kernel_initializer= 'he_normal'),
-        tf.keras.layers.BatchNormalization(),
-        tf.keras.layers.LeakyReLU()
-        ])
-    return model
-
+class Upsample(tf.keras.layers.Layer):
+    
+    def __init__(self, filters, kernel_size= (3,3), strides= 2, padding= 'same', input_shape= None):
+        super(Upsample, self).__init__()
+        if input_shape == None:
+            self.convt= tf.keras.layers.Conv2DTranspose(filters= filters, kernel_size= kernel_size,
+                                              strides= strides, padding= padding,
+                                              use_bias= False, kernel_initializer= 'he_normal')
+        else:
+            self.convt= tf.keras.layers.Conv2DTranspose(filters= filters, kernel_size= kernel_size,
+                                              strides= strides, padding= padding, input_shape= input_shape,
+                                              use_bias= False, kernel_initializer= 'he_normal')
+        self.bn= tf.keras.layers.BatchNormalization()
+        self.actn= tf.keras.layers.LeakyReLU()
+            
+    def call(self, x):
+        x= self.convt(x)
+        x= self.bn(x)
+        x= self.actn(x)
+        return x                  
+            
 class Generator(tf.keras.Model):
     """
     GENERATOR CLASS
@@ -35,19 +58,19 @@ class Generator(tf.keras.Model):
     
     def __init__(self):
         super(Generator, self).__init__()
-        self.downsample1= downsample(32)
-        self.downsample2= downsample(64)
-        self.downsample3= downsample(128)
-        self.downsample4= downsample(256)
-        self.downsample5= downsample(512)
-        self.downsample6= downsample(1024, kernel_size= (2,2))
+        self.downsample1= Downsample(32, input_shape= (64,64,2))
+        self.downsample2= Downsample(64)
+        self.downsample3= Downsample(128)
+        self.downsample4= Downsample(256)
+        self.downsample5= Downsample(512)
+        self.downsample6= Downsample(1024, kernel_size= (2,2))
         
-        self.upsample6= upsample(512, kernel_size= (2,2))
-        self.upsample5= upsample(256)
-        self.upsample4= upsample(128)
-        self.upsample3= upsample(64)
-        self.upsample2= upsample(32)
-        self.upsample1= upsample(1)
+        self.upsample6= Upsample(512, kernel_size= (2,2))
+        self.upsample5= Upsample(256)
+        self.upsample4= Upsample(128)
+        self.upsample3= Upsample(64)
+        self.upsample2= Upsample(32)
+        self.upsample1= Upsample(1)
     
     def call(self, x):
         ds1= self.downsample1(x)
@@ -69,11 +92,11 @@ class Discriminator(tf.keras.Model):
     
     def __init__(self):
         super(Discriminator, self).__init__()
-        self.downsample1= downsample(32)
-        self.downsample2= downsample(64)
-        self.downsample3= downsample(128)
-        self.downsample4= downsample(256)
-        self.downsample5= downsample(512)
+        self.downsample1= Downsample(32, input_shape= (64,64,1))
+        self.downsample2= Downsample(64)
+        self.downsample3= Downsample(128)
+        self.downsample4= Downsample(256)
+        self.downsample5= Downsample(512)
         self.flatten= tf.keras.layers.Flatten()
         self.dense= tf.keras.layers.Dense(1, activation= 'sigmoid')
         
@@ -89,7 +112,7 @@ class Discriminator(tf.keras.Model):
         return x
 
 @tf.function    
-def train_step(conditions, real_data, params):
+def train_step(conditions, real_data, params, generator, discriminator, discriminator_bce, generator_bce, generator_mse):
     with tf.GradientTape() as gtape, tf.GradientTape() as dtape:
         for k in range(params.k):
             fake_data= generator(conditions)
@@ -98,7 +121,7 @@ def train_step(conditions, real_data, params):
             fake_loss= discriminator_bce(tf.zeros_like(fake_prob), fake_prob)
             real_loss= discriminator_bce(tf.ones_like(real_prob), real_prob)
             discriminator_loss= real_loss + fake_loss
-        generator_loss= generator_bce(tf.ones_like(fake_prob), fake_prob)
+        generator_loss= generator_bce(tf.ones_like(fake_prob), fake_prob) + params.lambd*generator_mse(real_data, fake_data)
         
     dgrads= dtape.gradient(discriminator_loss, discriminator.trainable_variables)
     params.doptimizer.apply_gradients(zip(dgrads, discriminator.trainable_variables))
@@ -114,11 +137,17 @@ class cGAN:
         self.discriminator= Discriminator()
         self.discriminator_bce= tf.keras.losses.BinaryCrossentropy(from_logits= False)
         self.generator_bce= tf.keras.losses.BinaryCrossentropy(from_logits= False)
+        self.generator_mse= tf.keras.losses.MeanSquaredError()
     
     def train(self, conditions, real_data, params):
         # self.restore_checkpoint(params)
         for epoch in range(1, 1+params.epochs):
-            generator_loss, ggrads, discriminator_loss, dgrads= train_step(conditions, real_data, params)
+            generator_loss, ggrads, discriminator_loss, dgrads= train_step(conditions, real_data, 
+                                                                           params, self.generator, 
+                                                                           self.discriminator, 
+                                                                           discriminator_bce= self.discriminator_bce, 
+                                                                           generator_bce= self.generator_bce,
+                                                                           generator_mse= self.generator_mse)
             if epoch%5 == 0:
                 self.save_checkpoints(params)
         return generator_loss, ggrads, discriminator_loss, dgrads
@@ -138,8 +167,8 @@ class cGAN:
                                   discriminator_optimizer= params.doptimizer,
                                   generator= self.generator,
                                   discriminator= self.discriminator)
-        ckpt.restore(tf.train.latest_checkpoint(checkpoint_dir))
-  
+        ckpt.restore(tf.train.latest_checkpoint(checkpoint_dir))    
+    
 class params:
     pass
 
@@ -148,15 +177,10 @@ params.goptimizer= tf.keras.optimizers.Adam(params.learning_rate)
 params.doptimizer= tf.keras.optimizers.Adam(params.learning_rate)
 params.k= 2
 params.epochs= 2
+params.lambd= 0.01
 
-## just take an example
-arr= np.zeros(shape= (64,64,1))
-arr[:, 0,:]= 70
-arr[:, -1,:]= 100
-arr[0, :,:]= 10
-arr[-1,:,:]= 60
-bc= tf.expand_dims(tf.convert_to_tensor(arr, dtype= tf.float32), 0)
-real_data= bc
-conditions= bc
-gan= cGAN()
-generator_loss, ggrads, discriminator_loss, dgrads= gan.train(bc, bc, params)
+# x= tf.ones((1,64,64,2))
+# y= tf.ones((1,64,64,1))
+cgan= cGAN()
+generator_loss, ggrads, discriminator_loss, dgrads= cgan.train(x,y, params)
+cgan.save_checkpoints(params)
