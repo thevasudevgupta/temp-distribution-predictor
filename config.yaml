@@ -1,0 +1,22 @@
+generator:
+    optimizer: 'adam' # adam or rmsprop
+    learning_rate:
+        base_lr: 1e-4
+        max_lr: 1e-2
+        step_size: 2000
+        
+discriminator:
+    optimizer: 'adam' # adam or rmsprop
+    k: 2 # no of times discriminator will be trained per run of generator
+    learning_rate:
+        base_lr: 1e-4
+        max_lr: 1e-2
+        step_size: 2000
+
+cgan:
+    epochs: 2
+    lambd: 0.01 # parameter used in loss function
+    ckpt_dir: 'cgan_ckpt'
+    batch_size: 32
+    buffer_size: 400
+    validation_size: 100 # only integer

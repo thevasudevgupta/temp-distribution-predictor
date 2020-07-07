@@ -1,13 +1,8 @@
-
-"""
-cGAN implementation
+"""MODEL ARCHITECTURE
 
 @author: vasudevgupta
 """
-
 import tensorflow as tf
-import numpy as np
-import os
 
 class Downsample(tf.keras.layers.Layer):
     
@@ -100,7 +95,8 @@ class Discriminator(tf.keras.Model):
         self.flatten= tf.keras.layers.Flatten()
         self.dense= tf.keras.layers.Dense(1, activation= 'sigmoid')
         
-    def call(self, conditions, unknown):
+    def call(self, inputs):
+        conditions, unknown= inputs
         x= tf.concat([conditions, unknown], axis= -1)
         ds1= self.downsample1(x)
         ds2= self.downsample2(ds1)
@@ -110,77 +106,3 @@ class Discriminator(tf.keras.Model):
         x= self.flatten(ds5)
         x= self.dense(x)
         return x
-
-@tf.function    
-def train_step(conditions, real_data, params, generator, discriminator, discriminator_bce, generator_bce, generator_mse):
-    with tf.GradientTape() as gtape, tf.GradientTape() as dtape:
-        for k in range(params.k):
-            fake_data= generator(conditions)
-            fake_prob= discriminator(conditions, fake_data)
-            real_prob= discriminator(conditions, real_data)
-            fake_loss= discriminator_bce(tf.zeros_like(fake_prob), fake_prob)
-            real_loss= discriminator_bce(tf.ones_like(real_prob), real_prob)
-            discriminator_loss= real_loss + fake_loss
-        generator_loss= generator_bce(tf.ones_like(fake_prob), fake_prob) + params.lambd*generator_mse(real_data, fake_data)
-        
-    dgrads= dtape.gradient(discriminator_loss, discriminator.trainable_variables)
-    params.doptimizer.apply_gradients(zip(dgrads, discriminator.trainable_variables))
-    
-    ggrads= gtape.gradient(generator_loss, generator.trainable_variables)
-    params.goptimizer.apply_gradients(zip(ggrads, generator.trainable_variables))
-    return generator_loss, ggrads, discriminator_loss, dgrads
-
-class cGAN:
-    
-    def __init__(self):
-        self.generator= Generator()
-        self.discriminator= Discriminator()
-        self.discriminator_bce= tf.keras.losses.BinaryCrossentropy(from_logits= False)
-        self.generator_bce= tf.keras.losses.BinaryCrossentropy(from_logits= False)
-        self.generator_mse= tf.keras.losses.MeanSquaredError()
-    
-    def train(self, conditions, real_data, params):
-        # self.restore_checkpoint(params)
-        for epoch in range(1, 1+params.epochs):
-            generator_loss, ggrads, discriminator_loss, dgrads= train_step(conditions, real_data, 
-                                                                           params, self.generator, 
-                                                                           self.discriminator, 
-                                                                           discriminator_bce= self.discriminator_bce, 
-                                                                           generator_bce= self.generator_bce,
-                                                                           generator_mse= self.generator_mse)
-            if epoch%5 == 0:
-                self.save_checkpoints(params)
-        return generator_loss, ggrads, discriminator_loss, dgrads
-        
-    def save_checkpoints(self, params):
-        checkpoint_dir = 'cgan_ckpt'
-        checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
-        ckpt= tf.train.Checkpoint(generator_optimizer= params.goptimizer,
-                                  discriminator_optimizer= params.doptimizer,
-                                  generator= self.generator,
-                                  discriminator= self.discriminator)
-        ckpt.save(file_prefix= checkpoint_prefix)
-        
-    def restore_checkpoint(self, params):
-        checkpoint_dir = 'cgan_ckpt'
-        ckpt= tf.train.Checkpoint(generator_optimizer= params.goptimizer,
-                                  discriminator_optimizer= params.doptimizer,
-                                  generator= self.generator,
-                                  discriminator= self.discriminator)
-        ckpt.restore(tf.train.latest_checkpoint(checkpoint_dir))    
-    
-class params:
-    pass
-
-params.learning_rate= 0.001
-params.goptimizer= tf.keras.optimizers.Adam(params.learning_rate)
-params.doptimizer= tf.keras.optimizers.Adam(params.learning_rate)
-params.k= 2
-params.epochs= 2
-params.lambd= 0.01
-
-# x= tf.ones((1,64,64,2))
-# y= tf.ones((1,64,64,1))
-cgan= cGAN()
-generator_loss, ggrads, discriminator_loss, dgrads= cgan.train(x,y, params)
-cgan.save_checkpoints(params)
