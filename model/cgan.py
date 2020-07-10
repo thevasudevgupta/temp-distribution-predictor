@@ -104,7 +104,7 @@ class cGAN(object):
                 real_loss= self.discriminator_bce(tf.ones_like(real_prob), real_prob)
                 discriminator_loss= real_loss + fake_loss
             extra_loss= self.generator_mse(real_data, fake_data)
-            generator_loss= self.generator_bce(tf.ones_like(fake_prob), fake_prob) + self.config['cgan'].get('lambd', 0)*extra_loss
+            generator_loss= self.generator_bce(tf.ones_like(fake_prob), fake_prob) + self.config['generator'].get('lambd', 0)*extra_loss
             
         dgrads= dtape.gradient(discriminator_loss, self.discriminator.trainable_variables)
         self.doptimizer.apply_gradients(zip(dgrads, self.discriminator.trainable_variables))

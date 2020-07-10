@@ -42,7 +42,7 @@ if __name__ == '__main__':
     config= yaml.safe_load(open('config.yaml', 'r'))
     config= config.get('dataloader', None)
     # use this code for config7-10
-    configuration_name= 'config7'
+    configuration_name= 'config6'
     arr_dir= 'dataset/arr_format/'
     ansys_dir= 'dataset/ansys_format/'
     main_dir= '/Users/vasudevgupta/Desktop/GitHub/Prof_Prabhu_project/'

@@ -8,7 +8,7 @@ from sklearn.utils import shuffle
 
 from dataloader.dataset_utils import load_array
 
-def make_dataset(config, configuration_ls= [7,8,9,10]):
+def make_dataset(config, configuration_ls= [1,2,3,4,5,6,7,8,9,10]):
     
     arr= np.zeros(shape= (1,51,51,3))
     for i in configuration_ls:

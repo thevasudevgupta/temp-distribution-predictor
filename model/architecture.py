@@ -87,7 +87,7 @@ class Discriminator(tf.keras.Model):
     
     def __init__(self):
         super(Discriminator, self).__init__()
-        self.downsample1= Downsample(32, input_shape= (64,64,1))
+        self.downsample1= Downsample(32, input_shape= (64,64,3))
         self.downsample2= Downsample(64)
         self.downsample3= Downsample(128)
         self.downsample4= Downsample(256)
