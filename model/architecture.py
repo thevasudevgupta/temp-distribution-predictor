@@ -98,11 +98,11 @@ class Discriminator(tf.keras.Model):
     def call(self, inputs):
         conditions, unknown= inputs
         x= tf.concat([conditions, unknown], axis= -1)
-        ds1= self.downsample1(x)
-        ds2= self.downsample2(ds1)
-        ds3= self.downsample3(ds2)
-        ds4= self.downsample4(ds3)
-        ds5= self.downsample5(ds4)
+        ds1= self.downsample1(x + 0.05*tf.random.uniform(tf.shape(x)))
+        ds2= self.downsample2(ds1 + 0.05*tf.random.uniform(tf.shape(ds1)))
+        ds3= self.downsample3(ds2 + 0.05*tf.random.uniform(tf.shape(ds2)))
+        ds4= self.downsample4(ds3 + 0.05*tf.random.uniform(tf.shape(ds3)))
+        ds5= self.downsample5(ds4 + 0.05*tf.random.uniform(tf.shape(ds4)))
         x= self.flatten(ds5)
-        x= self.dense(x)
+        x= self.dense(x + 0.05*tf.random.uniform(tf.shape(x)))
         return x

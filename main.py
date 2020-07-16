@@ -29,7 +29,7 @@ if __name__ == '__main__':
     parser.add_argument('--config', type= str, default= 'config.yaml', help= 'filename for configuration')
     parser.add_argument('--model_name', type= str, default= 'cgan_model', help= 'model no')
     parser.add_argument('--save_model', type= bool, default= False, help= 'whether to save model')
-    parser.add_argument('--restore_model', type= bool, default= True, help= 'whether to restore saved weights')
+    parser.add_argument('--restore_model', type= bool, default= False, help= 'whether to restore saved weights')
     
     args= parser.parse_args()
     

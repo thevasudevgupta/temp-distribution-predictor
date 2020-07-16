@@ -28,9 +28,9 @@ class cGAN(object):
     def icompile(self, config):
         self.config= config
         
-        self.discriminator_bce= tf.keras.losses.BinaryCrossentropy(from_logits= False)
+        self.discriminator_bce= tf.keras.losses.BinaryCrossentropy(from_logits= False, label_smoothing=0.1)
         
-        self.generator_bce= tf.keras.losses.BinaryCrossentropy(from_logits= False)
+        self.generator_bce= tf.keras.losses.BinaryCrossentropy(from_logits= False, label_smoothing=0.1)
         self.generator_mse= tf.keras.losses.MeanSquaredError()
         
         self.glearning_rate= LearningRate(self.config['generator'])
@@ -39,12 +39,12 @@ class cGAN(object):
         if config['generator'].get('optimizer') == 'adam':
             self.goptimizer= tf.keras.optimizers.Adam(self.glearning_rate)
         else:
-            self.goptimizer= tf.keras.optimizers.RMSprop(self.glearning_rate)
+            self.goptimizer= tf.keras.optimizers.SGD(self.glearning_rate)
         
-        if config['generator'].get('optimizer') == 'adam':
-            self.doptimizer= tf.keras.optimizers.Adam(self.dlearning_rate)
+        if config['discriminator'].get('optimizer') == 'sgd':
+            self.doptimizer= tf.keras.optimizers.SGD(self.dlearning_rate)
         else: 
-            self.doptimizer= tf.keras.optimizers.RMSprop(self.dlearning_rate)
+            self.doptimizer= tf.keras.optimizers.Adam(self.dlearning_rate)
     
         self.mse_metric= tf.keras.metrics.MeanSquaredError()
         self.mae_metric= tf.keras.metrics.MeanAbsoluteError()
@@ -96,15 +96,24 @@ class cGAN(object):
     def train_step(self, conditions, real_data, val_conditions, val_real_data):
         
         with tf.GradientTape() as gtape, tf.GradientTape() as dtape:
+            
             for k in range(self.config['cgan'].get('k', 1)):
+                
                 fake_data= self.generator(conditions)
+                
                 fake_prob= self.discriminator([conditions, fake_data])
                 real_prob= self.discriminator([conditions, real_data])
-                fake_loss= self.discriminator_bce(tf.zeros_like(fake_prob), fake_prob)
-                real_loss= self.discriminator_bce(tf.ones_like(real_prob), real_prob)
+                # # adding random noise; may help in stablizing
+                fake_label= tf.zeros_like(fake_prob) # + self.config['discriminator'].get(epsilon, 0.0)*tf.random.uniform(tf.shape(fake_prob)))
+                real_label= tf.ones_like(real_prob) # + self.config['discriminator'].get(epsilon, 0.0)*tf.random.uniform(tf.shape(real_prob)))         
+    
+                fake_loss= self.discriminator_bce(fake_label, fake_prob)
+                real_loss= self.discriminator_bce(real_label, real_prob)
+                
                 discriminator_loss= real_loss + fake_loss
+            
             extra_loss= self.generator_mse(real_data, fake_data)
-            generator_loss= self.generator_bce(tf.ones_like(fake_prob), fake_prob) + self.config['generator'].get('lambd', 0)*extra_loss
+            generator_loss= self.generator_bce(tf.ones_like(fake_prob), fake_prob) + self.config['generator'].get('lambd', 0)*np.log(extra_loss)
             
         dgrads= dtape.gradient(discriminator_loss, self.discriminator.trainable_variables)
         self.doptimizer.apply_gradients(zip(dgrads, self.discriminator.trainable_variables))
@@ -146,3 +155,23 @@ class cGAN(object):
                                   generator= self.generator,
                                   discriminator= self.discriminator)
         ckpt.restore(tf.train.latest_checkpoint(checkpoint_dir))
+
+def transform(arr, file_name= 'old_mean', save_old_mean= True):
+    
+    maxm= tf.reduce_max(arr, axis= 0, keepdims= True)
+    minm= tf.reduce_min(arr, axis= 0, keepdims= True)
+    arr= (arr - minm)/ (maxm - minm)
+    
+    # if save_old_mean: 
+    #     save_array(old_mean, file_name, 'dataset')
+    #     return (arr - old_mean)/ old_mean
+    
+    return 2*arr - 1
+    
+# def inverse_normalize_channel(arr, file_name= 'old_mean', load_old_mean= True):
+#     if load_old_mean == True:
+#         old_mean= np.load('dataset'+'/'+'{}.npy'.format(file_name))
+#     else:
+#         old_mean= load_old_mean
+#     return arr*old_mean + old_mean
+
