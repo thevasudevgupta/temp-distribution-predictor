@@ -3,17 +3,17 @@ generator:
     # parameter used in loss function
     lambd: 1 # 0 if not specified
     learning_rate:
-        base_lr: 1e-4
-        max_lr: 5e-3
+        base_lr: 1e-5
+        max_lr: 1e-3
         step_size: 2000
         
 discriminator:
     optimizer: 'sgd' # adam or sgd
     # no of times discriminator will be trained per run of generator
-    k: 4 # 1 if not specified
+    k: 10 # 1 if not specified
     learning_rate:
-        base_lr: 1e-4
-        max_lr: 5e-3
+        base_lr: 1e-5
+        max_lr: 1e-3
         step_size: 2000
 
 cgan:

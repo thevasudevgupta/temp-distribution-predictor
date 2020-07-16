@@ -113,7 +113,7 @@ class cGAN(object):
                 discriminator_loss= real_loss + fake_loss
             
             extra_loss= self.generator_mse(real_data, fake_data)
-            generator_loss= self.generator_bce(tf.ones_like(fake_prob), fake_prob) + self.config['generator'].get('lambd', 0)*np.log(extra_loss)
+            generator_loss= self.generator_bce(tf.ones_like(fake_prob), fake_prob) + self.config['generator'].get('lambd', 0)*tf.math.log(extra_loss)
             
         dgrads= dtape.gradient(discriminator_loss, self.discriminator.trainable_variables)
         self.doptimizer.apply_gradients(zip(dgrads, self.discriminator.trainable_variables))
@@ -156,17 +156,17 @@ class cGAN(object):
                                   discriminator= self.discriminator)
         ckpt.restore(tf.train.latest_checkpoint(checkpoint_dir))
 
-def transform(arr, file_name= 'old_mean', save_old_mean= True):
-    
-    maxm= tf.reduce_max(arr, axis= 0, keepdims= True)
-    minm= tf.reduce_min(arr, axis= 0, keepdims= True)
-    arr= (arr - minm)/ (maxm - minm)
-    
-    # if save_old_mean: 
-    #     save_array(old_mean, file_name, 'dataset')
-    #     return (arr - old_mean)/ old_mean
-    
-    return 2*arr - 1
+#def transform(arr, file_name= 'old_mean', save_old_mean= True):
+#
+#    maxm= tf.reduce_max(arr, axis= 0, keepdims= True)
+#    minm= tf.reduce_min(arr, axis= 0, keepdims= True)
+#    arr= (arr - minm)/ (maxm - minm)
+#
+#    # if save_old_mean:
+#    #     save_array(old_mean, file_name, 'dataset')
+#    #     return (arr - old_mean)/ old_mean
+#
+#    return 2*arr - 1
     
 # def inverse_normalize_channel(arr, file_name= 'old_mean', load_old_mean= True):
 #     if load_old_mean == True:
