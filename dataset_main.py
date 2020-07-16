@@ -11,8 +11,7 @@ import time
 import logging
 import os
 
-os.chdir('/Users/vasudevgupta/Desktop/GitHub/Prof_Prabhu_project')
-from dataloader.dataset_utils import *
+from dataset_utils import *
 
 logger= logging.getLogger(__name__)
 

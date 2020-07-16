@@ -10,9 +10,9 @@ import os
 import wandb
 import logging
 
-from model.cgan import *
-from model.architecture import Generator, Discriminator
-from dataloader.tf_dataset import make_dataset
+from cgan import *
+from architecture import Generator, Discriminator
+from dataloader import make_dataset
 
 if __name__ == '__main__':
     os.chdir('/Users/vasudevgupta/Desktop/GitHub/Prof_Prabhu_project')

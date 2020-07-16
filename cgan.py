@@ -4,7 +4,7 @@
 """
 import numpy as np
 import tensorflow as tf
-from model.callbacks import LearningRate
+from callbacks import LearningRate
 
 import wandb
 import logging
