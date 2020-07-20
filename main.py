@@ -15,7 +15,7 @@ from architecture import Generator, Discriminator
 from dataloader import make_dataset
 
 if __name__ == '__main__':
-    os.chdir('/Users/vasudevgupta/Desktop/GitHub/Prof_Prabhu_project')
+    os.chdir('/Users/vasudevgupta/Desktop/temperature_distribution_prediction')
     logger= logging.getLogger(__name__)
     
     logger.setLevel(logging.INFO)

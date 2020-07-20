@@ -14,7 +14,7 @@ import time
 logger= logging.getLogger(__name__)
 
 logger.setLevel(logging.INFO)
-file_handler= logging.FileHandler('logs/train.log')
+file_handler= logging.FileHandler('../logs/train.log')
 form= logging.Formatter('%(levelname)s:%(name)s:%(message)s')
 file_handler.setFormatter(form)
 logger.addHandler(file_handler)

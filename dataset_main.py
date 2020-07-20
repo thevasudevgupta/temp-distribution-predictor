@@ -44,7 +44,7 @@ if __name__ == '__main__':
     configuration_name= 'config6'
     arr_dir= 'dataset/arr_format/'
     ansys_dir= 'dataset/ansys_format/'
-    main_dir= '/Users/vasudevgupta/Desktop/GitHub/Prof_Prabhu_project/'
+    main_dir= '../'
     
     os.chdir(main_dir + ansys_dir + configuration_name)
     file_names= os.listdir()
