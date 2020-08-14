@@ -17,7 +17,14 @@ def make_dataset(config, configuration_ls= [1,2,3,4,5,6,7,8,9,10]):
     arr= arr[1:]
     
     conditions= arr[:,:,:,:-1]
-    real_data= arr[:,:,:,-1:]
+#     real_data= arr[:,:,:,-1:]
+
+    real_data= np.full((len(arr), 51,51,1),-1)
+    for ix in range(len(arr)):
+        x = np.random.randint(15,35,5)
+        y = np.random.randint(15,35,5)
+        for i,j in zip(x,y):
+            real_data[ix,i,j,0] = arr[ix,i,j,-1:]
     conditions, real_data= shuffle(conditions, real_data)
     
     conditions= np.pad(conditions, ((0,0),(7,6),(7,6),(0,0)), constant_values= -1)
