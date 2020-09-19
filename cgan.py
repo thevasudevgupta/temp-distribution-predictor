@@ -14,7 +14,7 @@ import time
 logger= logging.getLogger(__name__)
 
 logger.setLevel(logging.INFO)
-file_handler= logging.FileHandler('../logs/train.log')
+file_handler= logging.FileHandler('./logs/train.log')
 form= logging.Formatter('%(levelname)s:%(name)s:%(message)s')
 file_handler.setFormatter(form)
 logger.addHandler(file_handler)
@@ -50,7 +50,7 @@ class cGAN(object):
         self.mae_metric= tf.keras.metrics.MeanAbsoluteError()
         
     def train(self, train_dataset, val_conditions, val_real_data, config, restore_model= True, save_model= False):
-        if restore_model: self.restore_checkpoint()
+        if restore_model: self.restore_checkpoint(self.config['cgan'].get('ckpt_dir', 'cgan_ckpt'))
         start= time.time()
         for epoch in range(1, 1+config['cgan'].get('epochs', 2)):
             
@@ -148,13 +148,18 @@ class cGAN(object):
                                   discriminator= self.discriminator)
         ckpt.save(file_prefix= checkpoint_prefix)
             
-    def restore_checkpoint(self):
-        checkpoint_dir = self.config['cgan'].get('ckpt_dir', 'cgan_ckpt')
+    def restore_checkpoint(self, ckpt_dir):
+        checkpoint_dir = ckpt_dir
         ckpt= tf.train.Checkpoint(generator_optimizer= self.goptimizer,
                                   discriminator_optimizer= self.doptimizer,
                                   generator= self.generator,
                                   discriminator= self.discriminator)
         ckpt.restore(tf.train.latest_checkpoint(checkpoint_dir))
+        
+    def get_prediction(self, conditions, ckpt_dir):
+        self.restore_checkpoint(ckpt_dir)
+        prediction= self.generator(conditions)
+        return prediction
 
 #def transform(arr, file_name= 'old_mean', save_old_mean= True):
 #

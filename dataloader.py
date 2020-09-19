@@ -12,7 +12,7 @@ def make_dataset(config, configuration_ls= [1,2,3,4,5,6,7,8,9,10]):
     
     arr= np.zeros(shape= (1,51,51,3))
     for i in configuration_ls:
-        configuration= load_array(f'../dataset/arr_format/config{i}')
+        configuration= load_array(f'./dataset/arr_format/config{i}')
         arr= np.concatenate([arr, configuration], axis= 0)
     arr= arr[1:]
     
@@ -33,4 +33,3 @@ def make_dataset(config, configuration_ls= [1,2,3,4,5,6,7,8,9,10]):
     val_real_data= real_data[-val_size:]
     
     return train_dataset, (val_conditions, val_real_data)
-

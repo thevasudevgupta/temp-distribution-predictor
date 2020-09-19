@@ -1,0 +1,14 @@
+.ipynb_checkpoints/
+__pycache__/
+*.env
+*.venv
+env/
+venv/
+ENV/
+wandb/
+*.DS_Store
+logs/
+dataset/
+trained_model/
+final_ckpts/
+*.csv
