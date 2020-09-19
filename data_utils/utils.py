@@ -1,7 +1,5 @@
-"""SOME IMPORTANT FUNCTION/ CLASSES
+# __author__ = 'Vasudev Gupta'
 
-@author: vasudevgupta
-"""
 import re
 import pandas as pd
 import numpy as np
@@ -105,7 +103,7 @@ def get_temp_arr(special_idx, df_col, dim_arr):
     return temp_arr.reshape(dim_arr, dim_arr)
 
 def save_array(array, file_no, directory):
-    with open(directory + f"/{file_no}.npy", "wb") as file:
+    with open(f"{directory}/{file_no}.npy", "wb") as file:
         np.save(file, array)
     return 
 

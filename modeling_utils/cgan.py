@@ -4,7 +4,8 @@
 """
 import numpy as np
 import tensorflow as tf
-from callbacks import LearningRate
+
+from modeling_utils.callbacks import LearningRate
 
 import wandb
 import logging
@@ -160,23 +161,3 @@ class cGAN(object):
         self.restore_checkpoint(ckpt_dir)
         prediction= self.generator(conditions)
         return prediction
-
-#def transform(arr, file_name= 'old_mean', save_old_mean= True):
-#
-#    maxm= tf.reduce_max(arr, axis= 0, keepdims= True)
-#    minm= tf.reduce_min(arr, axis= 0, keepdims= True)
-#    arr= (arr - minm)/ (maxm - minm)
-#
-#    # if save_old_mean:
-#    #     save_array(old_mean, file_name, 'dataset')
-#    #     return (arr - old_mean)/ old_mean
-#
-#    return 2*arr - 1
-    
-# def inverse_normalize_channel(arr, file_name= 'old_mean', load_old_mean= True):
-#     if load_old_mean == True:
-#         old_mean= np.load('dataset'+'/'+'{}.npy'.format(file_name))
-#     else:
-#         old_mean= load_old_mean
-#     return arr*old_mean + old_mean
-
