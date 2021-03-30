@@ -4,7 +4,6 @@ import tensorflow as tf
 import numpy as np
 from sklearn.utils import shuffle
 
-from data_utils.binary_filters import call_function
 from data_utils.utils import load_array
 
 
