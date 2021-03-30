@@ -10,11 +10,8 @@
 # Matrix -> theta (181), height (201)
 
 """
-USAGE:
-    Run this script to prepare convert data from .csv format to 2D matrix format
-
-COMMAND:
-    `python prepare_data_3d.py`
+USAGE: Run this script to prepare convert data (cylinder) from .csv format to 2D matrix format
+COMMAND: `python prepare_data_3d.py`
 """
 
 import numpy as np
@@ -34,6 +31,8 @@ ARRAY_DATA_DIR = "./dataset/3d/array_format/"
 
 def pipeline(load_dir, save_dir=None):
 
+    # this may take upto 20 mins (~ 5.5GB extra space)
+
     file_names = os.listdir(load_dir)
     if '.DS_Store' in file_names: file_names.remove('.DS_Store')
 
@@ -41,8 +40,9 @@ def pipeline(load_dir, save_dir=None):
 
         # load dataset
         df = pd.read_table(os.path.join(load_dir, file_name))
-        assert df.iloc[7, 0] == "% x,y,z,T (K)", f"{file_name} not in expected format"
-        assert df.shape == (36389, 1), f"{file_name} not in expected format"
+        if df.iloc[7, 0] != "% x,y,z,T (K)" or df.shape != (36389, 1):
+            logger.warning(f"{file_name} not in expected format")
+            continue
         df = df.iloc[8:, 0]
         df = df.str.split(',', expand=True)
         df.columns = ['x', 'y', 'z', 'T']
@@ -65,7 +65,7 @@ def pipeline(load_dir, save_dir=None):
         temp_arr = temp_arr.transpose(1, 0)
         # -> (181, 201)
 
-        # get boundary conditions
+        # get boundary conditions arrays
         _, tho, vho, tci, vci = file_name.split("_")
         tho = float(tho)
         vho = float(vho)
@@ -93,12 +93,13 @@ def pipeline(load_dir, save_dir=None):
 
         # Save in numpy format
         arr_for_saving = np.stack([to_channel, vo_channel, ti_channel, vi_channel, temp_arr])
+        assert arr_for_saving.shape == (5, 181, 201), f"Issues in {file_name}"
         if save_dir is not None:
             save_array(arr_for_saving, file_name[:-4], directory=save_dir)
 
     print("Preprocessed data saved in ", ARRAY_DATA_DIR)
     logger.info('1st channel: TEMPERATURE OUTSIDE, 2nd channel: VELOCITY OUTSIDE, 3rd channel: TEMPERATURE INSIDE, \
-        4th channel: VELOCITY INSIDE, 5th channel: TEMPERATURE PREDICTION')
+        4th channel: VELOCITY INSIDE, 5th channel: TEMPERATURE TARGET')
 
 
 if __name__ == '__main__':
