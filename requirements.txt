@@ -4,3 +4,4 @@ pandas
 wandb
 scikit-learn
 tqdm
+pyyaml

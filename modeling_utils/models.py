@@ -3,6 +3,7 @@
 @author: vasudevgupta
 """
 import tensorflow as tf
+TRAIN_3D = True
 
 class Downsample(tf.keras.layers.Layer):
     
@@ -53,7 +54,7 @@ class Generator(tf.keras.Model):
     
     def __init__(self):
         super(Generator, self).__init__()
-        self.downsample1= Downsample(32, input_shape= (64,64,2))
+        self.downsample1= Downsample(32, input_shape=((256,256,4) if TRAIN_3D else (64,64,2)))
         self.downsample2= Downsample(64)
         self.downsample3= Downsample(128)
         self.downsample4= Downsample(256)
@@ -84,10 +85,10 @@ class Generator(tf.keras.Model):
         return up1
 
 class Discriminator(tf.keras.Model):
-    
+
     def __init__(self):
         super(Discriminator, self).__init__()
-        self.downsample1= Downsample(32, input_shape= (64,64,3))
+        self.downsample1= Downsample(32, input_shape=((256,256,5) if TRAIN_3D else (64,64,3)))
         self.downsample2= Downsample(64)
         self.downsample3= Downsample(128)
         self.downsample4= Downsample(256)

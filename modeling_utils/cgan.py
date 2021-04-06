@@ -7,6 +7,7 @@ import tensorflow as tf
 
 from modeling_utils.callbacks import LearningRate
 
+from tqdm import tqdm
 import wandb
 import logging
 import os
@@ -59,7 +60,7 @@ class cGAN(object):
             dloss_ls= []
             tr_generator_mse_ls= []
             
-            for conditions, real_data in train_dataset:
+            for conditions, real_data in tqdm(train_dataset, desc=f"running epoch-{epoch}"):
                 
                 history= self.train_step(conditions, real_data, val_conditions, val_real_data)
                 
@@ -95,11 +96,11 @@ class cGAN(object):
         
     @tf.function
     def train_step(self, conditions, real_data, val_conditions, val_real_data):
-        
+
         with tf.GradientTape() as gtape, tf.GradientTape() as dtape:
-            
-            for k in range(self.config['cgan'].get('k', 1)):
-                
+
+            for _ in range(self.config['cgan'].get('k', 1)):
+
                 fake_data= self.generator(conditions)
                 
                 fake_prob= self.discriminator([conditions, fake_data])
@@ -115,15 +116,15 @@ class cGAN(object):
             
             extra_loss= self.generator_mse(real_data, fake_data)
             generator_loss= self.generator_bce(tf.ones_like(fake_prob), fake_prob) + self.config['generator'].get('lambd', 0)*tf.math.log(extra_loss)
-            
+
         dgrads= dtape.gradient(discriminator_loss, self.discriminator.trainable_variables)
         self.doptimizer.apply_gradients(zip(dgrads, self.discriminator.trainable_variables))
-        
+
         ggrads= gtape.gradient(generator_loss, self.generator.trainable_variables)
         self.goptimizer.apply_gradients(zip(ggrads, self.generator.trainable_variables))
-        
+
         self.evaluate(val_conditions, val_real_data)
-        
+
         metrics= {
             'gloss': generator_loss,
             'dloss': discriminator_loss,
@@ -131,9 +132,9 @@ class cGAN(object):
             'val_generator_mae': self.mae_metric.result(),
             'val_generator_mse': self.mse_metric.result()
             }
-        
+
         return {'metrics': metrics, 'ggrads': ggrads, 'dgrads': dgrads}
-    
+
     def evaluate(self, val_conditions, val_real_data):
         val_fake_pred= self.generator(val_conditions)
         self.mse_metric.update_state(val_real_data, val_fake_pred)
