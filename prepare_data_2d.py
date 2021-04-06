@@ -5,14 +5,12 @@ USAGE:
     Run this script to prepare convert data from .csv format to 2D matrix format
 
 COMMAND:
-    `python convert_data.py --config_name {config_name}`
+    `python prepare_data_2d.py --config_name {config_name}`
 """
 
 import pandas as pd
 import numpy as np
-import re
 
-import time
 import logging
 import os
 

@@ -64,7 +64,7 @@ def read_file(file_name, check_assertion= True):
     df_col= df_col.apply(lambda x: x if len(x) == 3 else np.nan)
     df_col.dropna(inplace= True)
     df_col= df_col[2:]
-    
+
     df= pd.DataFrame()
     df['x']= df_col.apply(lambda x: np.round(float(x[0]), 2))
     df['y']= df_col.apply(lambda x: np.round(float(x[1]), 2))
@@ -103,7 +103,8 @@ def get_temp_arr(special_idx, df_col, dim_arr):
     return temp_arr.reshape(dim_arr, dim_arr)
 
 def save_array(array, file_no, directory):
-    with open(f"{directory}/{file_no}.npy", "wb") as file:
+    path = os.path.join(directory, f"{file_no}.npy")
+    with open(path, "wb") as file:
         np.save(file, array)
     return 
 
